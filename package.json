@@ -2,6 +2,10 @@
   "name": "webrtc_p2p",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "start": "bun run index.ts",
+    "ngrok": "ngrok http 3000"
+  },
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/ws": "^8.18.1",

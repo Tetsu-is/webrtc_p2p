@@ -5,18 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WebRTC P2P Demo</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 30px auto;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
       background-color: #f5f5f5;
     }
+    .layout-wrapper {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
     .container {
+      flex: 0 0 80%;
       background: white;
       padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow-y: auto;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    }
+    .sidebar {
+      flex: 0 0 20%;
+      background: #e9ecef;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
     h1 {
       color: #333;
@@ -72,7 +88,25 @@
       margin: 0;
     }
     .message-form {
-      margin-bottom: 20px;
+      margin-top: 10px;
+    }
+    .sidebar .message-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sidebar input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .sidebar button {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      margin: 0;
     }
     input[type="text"] {
       width: 70%;
@@ -112,6 +146,15 @@
       overflow-y: auto;
       background-color: #fafafa;
     }
+    .sidebar .messages {
+      flex: 1;
+      height: auto;
+      min-height: 200px;
+      margin-bottom: 10px;
+    }
+    .sidebar h3 {
+      margin-top: 0;
+    }
     .message {
       padding: 8px;
       margin-bottom: 8px;
@@ -148,6 +191,8 @@
     video {
       width: 100%;
       max-width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
       background-color: #000;
       border-radius: 4px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -161,55 +206,120 @@
     button.danger:hover {
       background-color: #c82333;
     }
+
+    /* モバイル用メッセージエリア（デフォルトは非表示） */
+    .mobile-messages-section {
+      display: none;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+    }
+    .mobile-messages-section .messages {
+      height: 250px;
+      margin-bottom: 15px;
+    }
+    .mobile-messages-section .message-form {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .mobile-messages-section input[type="text"] {
+      flex: 1;
+      width: auto;
+      margin: 0;
+    }
+    .mobile-messages-section button {
+      margin: 0;
+      flex-shrink: 0;
+    }
+
+    /* モバイル表示 */
+    @media (max-width: 768px) {
+      .layout-wrapper {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      .container {
+        flex: 1;
+        width: 100%;
+        padding: 20px;
+      }
+      .sidebar {
+        display: none;
+      }
+      .mobile-messages-section {
+        display: block;
+      }
+      .video-wrapper {
+        min-width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>WebRTC P2P通信デモ</h1>
+  <div class="layout-wrapper">
+    <div class="container">
+      <h1>WebRTC P2P通信デモ</h1>
 
-    <div class="info">
-      <strong>あなたのID:</strong> <span id="myId">接続待ち...</span>
-    </div>
-
-    <div id="signalingStatus" class="status disconnected">
-      シグナリングサーバーに接続していません
-    </div>
-
-    <div id="p2pStatus" class="status disconnected">
-      P2P接続していません
-    </div>
-
-    <div class="media-controls">
-      <button id="startMediaButton" class="success">カメラ・音声を開始</button>
-      <button id="stopMediaButton" class="danger" disabled>カメラ・音声を停止</button>
-    </div>
-
-    <div class="video-section">
-      <h3>ビデオ通話</h3>
-      <div class="video-container">
-        <div class="video-wrapper">
-          <h4>ローカルビデオ（あなた）</h4>
-          <video id="localVideo" autoplay muted playsinline></video>
+      <div class="video-section">
+        <h3>ビデオ通話</h3>
+        <div class="video-container">
+          <div class="video-wrapper">
+            <h4>ローカルビデオ（あなた）</h4>
+            <video id="localVideo" autoplay muted playsinline></video>
+          </div>
+          <div class="video-wrapper">
+            <h4>リモートビデオ（相手）</h4>
+            <video id="remoteVideo" autoplay playsinline></video>
+          </div>
         </div>
-        <div class="video-wrapper">
-          <h4>リモートビデオ（相手）</h4>
-          <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+
+      <div class="info">
+        <strong>あなたのID:</strong> <span id="myId">接続待ち...</span>
+      </div>
+
+      <div id="signalingStatus" class="status disconnected">
+        シグナリングサーバーに接続していません
+      </div>
+
+      <div id="p2pStatus" class="status disconnected">
+        P2P接続していません
+      </div>
+
+      <div class="media-controls">
+        <button id="startMediaButton" class="success">カメラ・音声を開始</button>
+        <button id="stopMediaButton" class="danger" disabled>カメラ・音声を停止</button>
+      </div>
+
+      <div class="peers-section">
+        <h3>利用可能なPeer</h3>
+        <div id="peerList" class="peer-list"></div>
+      </div>
+
+      <!-- モバイル用メッセージエリア -->
+      <div class="mobile-messages-section">
+        <h3>messages</h3>
+        <div id="messagesMobile" class="messages"></div>
+        <div class="message-form">
+          <input type="text" id="messageInputMobile" placeholder="P2P接続後にメッセージを入力..." disabled>
+          <button id="sendButtonMobile" disabled>送信</button>
         </div>
       </div>
     </div>
 
-    <div class="peers-section">
-      <h3>利用可能なPeer</h3>
-      <div id="peerList" class="peer-list"></div>
-    </div>
+    <!-- PC用サイドバー -->
+    <div class="sidebar">
+      <h3>messages</h3>
 
-    <div class="message-form">
-      <input type="text" id="messageInput" placeholder="P2P接続後にメッセージを入力..." disabled>
-      <button id="sendButton" disabled>送信</button>
-    </div>
+      <div id="messages" class="messages"></div>
 
-    <h3>メッセージ履歴</h3>
-    <div id="messages" class="messages"></div>
+      <div class="message-form">
+        <input type="text" id="messageInput" placeholder="P2P接続後にメッセージを入力..." disabled>
+        <button id="sendButton" disabled>送信</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -227,9 +337,15 @@
     const signalingStatusDiv = document.getElementById('signalingStatus');
     const p2pStatusDiv = document.getElementById('p2pStatus');
     const peerListDiv = document.getElementById('peerList');
+    // PC用
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
     const messagesDiv = document.getElementById('messages');
+    // モバイル用
+    const messageInputMobile = document.getElementById('messageInputMobile');
+    const sendButtonMobile = document.getElementById('sendButtonMobile');
+    const messagesDivMobile = document.getElementById('messagesMobile');
+    // その他
     const localVideo = document.getElementById('localVideo');
     const remoteVideo = document.getElementById('remoteVideo');
     const startMediaButton = document.getElementById('startMediaButton');
@@ -536,8 +652,12 @@
     function setupDataChannel() {
       dataChannel.onopen = () => {
         console.log('データチャネルが開きました');
+        // PC用
         messageInput.disabled = false;
         sendButton.disabled = false;
+        // モバイル用
+        messageInputMobile.disabled = false;
+        sendButtonMobile.disabled = false;
         addMessage('データチャネルが開きました。メッセージを送信できます。', 'system');
       };
 
@@ -548,18 +668,30 @@
 
       dataChannel.onclose = () => {
         console.log('データチャネルが閉じました');
+        // PC用
         messageInput.disabled = true;
         sendButton.disabled = true;
+        // モバイル用
+        messageInputMobile.disabled = true;
+        sendButtonMobile.disabled = true;
       };
     }
 
     // メッセージ送信
     function sendMessage() {
-      const message = messageInput.value.trim();
+      // PC用の入力フィールドから取得（モバイルの場合は空になる）
+      let message = messageInput.value.trim();
+      // モバイル用の入力フィールドから取得（値があればこちらを使う）
+      if (!message) {
+        message = messageInputMobile.value.trim();
+      }
+
       if (message && dataChannel && dataChannel.readyState === 'open') {
         dataChannel.send(message);
         addMessage(`送信: ${message}`, 'sent');
+        // 両方の入力フィールドをクリア
         messageInput.value = '';
+        messageInputMobile.value = '';
       }
     }
 
@@ -575,8 +707,12 @@
       }
       remoteVideo.srcObject = null;
       remotePeerId = null;
+      // PC用
       messageInput.disabled = true;
       sendButton.disabled = true;
+      // モバイル用
+      messageInputMobile.disabled = true;
+      sendButtonMobile.disabled = true;
       p2pStatusDiv.textContent = 'P2P接続していません';
       p2pStatusDiv.className = 'status disconnected';
       updatePeerList();
@@ -584,20 +720,37 @@
 
     // メッセージ表示
     function addMessage(text, type) {
+      // PC用
       const messageElement = document.createElement('div');
       messageElement.className = `message ${type}`;
       messageElement.textContent = text;
       messagesDiv.appendChild(messageElement);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      // モバイル用
+      const messageElementMobile = document.createElement('div');
+      messageElementMobile.className = `message ${type}`;
+      messageElementMobile.textContent = text;
+      messagesDivMobile.appendChild(messageElementMobile);
+      messagesDivMobile.scrollTop = messagesDivMobile.scrollHeight;
     }
 
     // イベントリスナー
+    // PC用
     sendButton.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
         sendMessage();
       }
     });
+    // モバイル用
+    sendButtonMobile.addEventListener('click', sendMessage);
+    messageInputMobile.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    // その他
     startMediaButton.addEventListener('click', startMedia);
     stopMediaButton.addEventListener('click', stopMedia);
 

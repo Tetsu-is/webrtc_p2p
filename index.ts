@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 
 // WebSocketクライアントを管理するMap
 interface WebSocketClient extends WebSocket {
-  id?: string;
+  id?: string; // クライアントIDを保持できるように拡張
 }
 
 const clients = new Map<string, WebSocketClient>();
