@@ -100,7 +100,11 @@ function broadcastToOthers(excludeId: string, message: any) {
   });
 }
 
-server.listen(PORT, () => {
-  console.log(`サーバーが起動しました: http://localhost:${PORT}`);
-  console.log(`WebRTCシグナリングサーバーが起動しています`);
-});
+if (import.meta.main) {
+  server.listen(PORT, () => {
+    console.log(`サーバーが起動しました: http://localhost:${PORT}`);
+    console.log(`WebRTCシグナリングサーバーが起動しています`);
+  });
+}
+
+export { server };

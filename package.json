@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
-    "ngrok": "ngrok http 3000"
+    "ngrok": "ngrok http 3000",
+    "test": "bun test"
   },
   "devDependencies": {
     "@types/express": "^5.0.5",
