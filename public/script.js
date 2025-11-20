@@ -430,3 +430,4 @@
     stopMediaButton.addEventListener('click', stopMedia);
 
     // 初期接続
+    connectSignaling();
